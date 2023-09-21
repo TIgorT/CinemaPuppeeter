@@ -1,5 +1,21 @@
-const { clickElement, putText, getText } = require("./lib/commands.js");
-const { generateName } = require("./lib/util.js");
+const { expect } = require("chai");
+const {
+  theDayOfTheFilmScreening,
+  sessionTime,
+  choosingAPlace,
+  clickingTheBookButton,
+  buttonName,
+  choosingAVIPPlace,
+  sessionTimeVIP,
+  sessionTimeTerminator,
+  buttonStatus,
+  choosingReservedSeat,
+} = require("./lib/commands.js");
+const {
+  dateGeneration,
+  rowGeneration,
+  placeGeneration,
+} = require("./lib/util.js");
 let page;
 
 beforeEach(async () => {
@@ -10,20 +26,41 @@ afterEach(() => {
   page.close();
 });
 
-describe("Netology.ru tests", () => {
+describe("Let's go to the cinema", () => {
   beforeEach(async () => {
-    page = await browser.newPage();
-    await page.goto("https://netology.ru");
+    await page.goto("http://qamid.tmweb.ru/client/index.php");
+  }, 5000);
+
+  test("Successful booking of one seat", async () => {
+    let choosingADay = dateGeneration();
+    let rowSelection = rowGeneration();
+    let place = placeGeneration();
+    await theDayOfTheFilmScreening(page, choosingADay);
+    await sessionTime(page);
+    await choosingAPlace(page, rowSelection, place);
+    await clickingTheBookButton(page);
+    const actual = await buttonName(page);
+    expect(actual).to.equal("Получить код бронирования");
   });
 
-  test("The first test'", async () => {
-    const title = await page.title();
-    console.log("Page title: " + title);
-    await clickElement(page, "header a + a");
-    const title2 = await page.title();
-    console.log("Page title: " + title2);
-    const pageList = await browser.newPage();
-    await pageList.goto("https://netology.ru/navigation");
-    await pageList.waitForSelector("h1");
+  test("Successful booking of one VIP seat", async () => {
+    let choosingADay = dateGeneration();
+    await theDayOfTheFilmScreening(page, choosingADay);
+    await sessionTimeVIP(page);
+    await choosingAVIPPlace(page);
+    await clickingTheBookButton(page);
+    const actual = await buttonName(page);
+    expect(actual).to.equal("Получить код бронирования");
+  });
+
+  test("Unsuccessful seat reservation", async () => {
+    let choosingADay = dateGeneration();
+    let rowSelection = rowGeneration();
+    let place = placeGeneration();
+    await theDayOfTheFilmScreening(page, choosingADay);
+    await sessionTimeTerminator(page);
+    await choosingReservedSeat(page);
+    const actual = await buttonStatus(page);
+    expect(actual).to.equal(true);
   });
 });
